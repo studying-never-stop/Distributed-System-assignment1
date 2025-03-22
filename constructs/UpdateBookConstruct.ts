@@ -19,7 +19,7 @@ export class UpdateBookConstruct extends Construct {
     super(scope, id);
 
     this.handler = new NodejsFunction(this, 'UpdateBookFunction', {
-      entry: path.join(__dirname, '../lambdas/updateBook.ts'),
+        entry: `${__dirname}/../lambdas/updateBook.ts`,
       runtime: Runtime.NODEJS_18_X,
       architecture: Architecture.ARM_64,
       timeout: cdk.Duration.seconds(10),

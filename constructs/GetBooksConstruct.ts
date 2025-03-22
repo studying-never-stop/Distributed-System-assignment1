@@ -3,7 +3,7 @@ import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs'; // Node.js Lambd
 import { Runtime, Architecture } from 'aws-cdk-lib/aws-lambda'; // Lambda 配置项
 import { ITable } from 'aws-cdk-lib/aws-dynamodb'; // DynamoDB 表接口
 import * as cdk from 'aws-cdk-lib'; // Duration 工具
-import * as path from 'path'; // 路径模块
+
 
 // 构造参数接口
 export interface GetBooksConstructProps {
@@ -19,7 +19,7 @@ export class GetBooksConstruct extends Construct {
     super(scope, id);
 
     this.handler = new NodejsFunction(this, 'GetBooksFunction', {
-      entry: path.join(__dirname, '../lambdas/getBooks.ts'), // Lambda 入口
+      entry: `${__dirname}/../lambdas/getBooks.ts`, // Lambda 入口
       runtime: Runtime.NODEJS_18_X,
       architecture: Architecture.ARM_64,
       timeout: cdk.Duration.seconds(10),
