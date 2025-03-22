@@ -1,5 +1,3 @@
-// lambdas/getBook.ts
-
 import { APIGatewayProxyHandler } from 'aws-lambda'; // Lambda 请求处理器类型定义
 import { DynamoDB } from 'aws-sdk'; // 引入 DynamoDB 客户端库
 
