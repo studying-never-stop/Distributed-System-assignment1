@@ -5,6 +5,10 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'; // 导入 DynamoDB 模块
 import * as lambda from 'aws-cdk-lib/aws-lambda'; // 导入 Lambda 模块
 import * as apigateway from 'aws-cdk-lib/aws-apigateway'; // 导入 API Gateway 模块
 import * as lambdanode from "aws-cdk-lib/aws-lambda-nodejs";
+import * as custom from 'aws-cdk-lib/custom-resources';
+
+import { Books } from '../seed/books'; // 引入原始播种数据
+import { generateBatch } from '../shared/util'; // 引入批量格式化函数
 
 export class BookStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -30,6 +34,30 @@ export class BookStack extends cdk.Stack {
         TABLE_NAME: table.tableName, // 将表名注入到环境变量
         REGION: 'eu-west-1',
       },
+    });
+
+ // ✅ 自动播种数据：通过 AwsCustomResource + batchWriteItem 实现
+
+    // 创建一个自定义资源，在 CDK 部署时执行 DynamoDB 的 batchWriteItem 操作
+    new custom.AwsCustomResource(this, 'SeedBooksData', {
+      onCreate: {
+        // 指定要调用的 AWS 服务和操作
+        // 此处是调用 DynamoDB 的 batchWriteItem 方法
+        service: 'DynamoDB', // 使用 DynamoDB 服务
+        action: 'batchWriteItem', // 执行批量写入操作
+        parameters: {
+          // 设置请求参数，包含要写入的数据
+          RequestItems: {
+            // 动态设置目标表名并传入批量数据
+            [table.tableName]: generateBatch(Books), // 表名为 BooksTable，值为写入请求数组
+          },
+        },
+        physicalResourceId: custom.PhysicalResourceId.of('SeedBooksData'), // 用于标识该资源的唯一性，防止重复创建
+      },
+      policy: custom.AwsCustomResourcePolicy.fromSdkCalls({
+        // 授予该自定义资源访问 DynamoDB 表的权限
+        resources: [table.tableArn], // 允许访问 BooksTable 表
+      }),
     });
 
     // 授予 Lambda 写入 DynamoDB 的权限
