@@ -4,6 +4,7 @@ import { Construct } from 'constructs'; // 用于定义构造函数的基础类
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'; // 导入 DynamoDB 模块
 import * as lambda from 'aws-cdk-lib/aws-lambda'; // 导入 Lambda 模块
 import * as apigateway from 'aws-cdk-lib/aws-apigateway'; // 导入 API Gateway 模块
+import * as lambdanode from "aws-cdk-lib/aws-lambda-nodejs";
 
 export class BookStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -19,12 +20,15 @@ export class BookStack extends cdk.Stack {
     });
 
     // 创建 Lambda 函数 postBook，用于添加书籍
-    const postBookFn = new lambda.Function(this, 'PostBookFunction', {
+    const postBookFn = new lambdanode.NodejsFunction(this, 'PostBookFunction', {
       runtime: lambda.Runtime.NODEJS_18_X, // 使用 Node.js 18 运行时
-      handler: 'postBook.handler', // Lambda 函数入口（文件名.函数名）
-      code: lambda.Code.fromAsset('lambda'), // 指定代码路径
+      architecture: lambda.Architecture.ARM_64,
+      entry: `${__dirname}/../lambdas/postBook.ts`,
+      timeout: cdk.Duration.seconds(10),
+        memorySize: 128,
       environment: {
         TABLE_NAME: table.tableName, // 将表名注入到环境变量
+        REGION: 'eu-west-1',
       },
     });
 
