@@ -36,7 +36,19 @@ export class BookStack extends cdk.Stack {
       },
     });
 
- // ✅ 自动播种数据：通过 AwsCustomResource + batchWriteItem 实现
+    const getBooksFn = new lambdanode.NodejsFunction(this, 'GetBooksFunction', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      architecture: lambda.Architecture.ARM_64,
+      entry: `${__dirname}/../lambdas/getBooks.ts`,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        TABLE_NAME: table.tableName,
+        REGION: 'eu-west-1',
+      },
+    });
+
+ // 自动播种数据：通过 AwsCustomResource + batchWriteItem 实现
 
     // 创建一个自定义资源，在 CDK 部署时执行 DynamoDB 的 batchWriteItem 操作
     new custom.AwsCustomResource(this, 'SeedBooksData', {
