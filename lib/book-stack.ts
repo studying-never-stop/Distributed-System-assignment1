@@ -2,13 +2,20 @@
 import * as cdk from 'aws-cdk-lib'; // 导入 CDK 核心库
 import { Construct } from 'constructs'; // 用于定义构造函数的基础类
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'; // 导入 DynamoDB 模块
-import * as lambda from 'aws-cdk-lib/aws-lambda'; // 导入 Lambda 模块
+// import * as lambda from 'aws-cdk-lib/aws-lambda'; // 导入 Lambda 模块
 import * as apigateway from 'aws-cdk-lib/aws-apigateway'; // 导入 API Gateway 模块
-import * as lambdanode from "aws-cdk-lib/aws-lambda-nodejs";
+// import * as lambdanode from "aws-cdk-lib/aws-lambda-nodejs";
 import * as custom from 'aws-cdk-lib/custom-resources';
 
 import { Books } from '../seed/books'; // 引入原始播种数据
 import { generateBatch } from '../shared/util'; // 引入批量格式化函数
+import { TranslateBookConstruct } from '../constructs/TranslateBookConstruct';
+import { PostBookConstruct } from '../constructs/PostBookConstruct';
+import { GetBooksConstruct } from '../constructs/GetBooksConstruct';
+import { GetBookConstruct } from '../constructs/GetBookConstruct';
+import { UpdateBookConstruct } from '../constructs/UpdateBookConstruct';
+
+
 
 export class BookStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -24,65 +31,98 @@ export class BookStack extends cdk.Stack {
     });
 
     // 创建 Lambda 函数 postBook，用于添加书籍
-    const postBookFn = new lambdanode.NodejsFunction(this, 'PostBookFunction', {
-      runtime: lambda.Runtime.NODEJS_18_X, // 使用 Node.js 18 运行时
-      architecture: lambda.Architecture.ARM_64,
-      entry: `${__dirname}/../lambdas/postBook.ts`,
-      timeout: cdk.Duration.seconds(10),
-        memorySize: 128,
-      environment: {
-        TABLE_NAME: table.tableName, // 将表名注入到环境变量
-        REGION: 'eu-west-1',
-      },
+    // const postBookFn = new lambdanode.NodejsFunction(this, 'PostBookFunction', {
+    //   runtime: lambda.Runtime.NODEJS_18_X, // 使用 Node.js 18 运行时
+    //   architecture: lambda.Architecture.ARM_64,
+    //   entry: `${__dirname}/../lambdas/postBook.ts`,
+    //   timeout: cdk.Duration.seconds(10),
+    //     memorySize: 128,
+    //   environment: {
+    //     TABLE_NAME: table.tableName, // 将表名注入到环境变量
+    //     REGION: 'eu-west-1',
+    //   },
+    // });
+
+    // const getBooksFn = new lambdanode.NodejsFunction(this, 'GetBooksFunction', {
+    //   runtime: lambda.Runtime.NODEJS_18_X,
+    //   architecture: lambda.Architecture.ARM_64,
+    //   entry: `${__dirname}/../lambdas/getBooks.ts`,
+    //   timeout: cdk.Duration.seconds(10),
+    //   memorySize: 128,
+    //   environment: {
+    //     TABLE_NAME: table.tableName,
+    //     REGION: 'eu-west-1',
+    //   },
+    // });
+
+    // const getBookFn = new lambdanode.NodejsFunction(this, 'GetBookFunction', {
+    //   runtime: lambda.Runtime.NODEJS_18_X,
+    //   architecture: lambda.Architecture.ARM_64,
+    //   entry: `${__dirname}/../lambdas/getBook.ts`,
+    //   timeout: cdk.Duration.seconds(10),
+    //   memorySize: 128,
+    //   environment: {
+    //     TABLE_NAME: table.tableName,
+    //     REGION: 'eu-west-1',
+    //   },
+    // });
+
+    // const updateBookFn = new lambdanode.NodejsFunction(this, 'UpdateBookFunction', {
+    //   runtime: lambda.Runtime.NODEJS_18_X,
+    //   architecture: lambda.Architecture.ARM_64,
+    //   entry: `${__dirname}/../lambdas/updateBook.ts`,
+    //   timeout: cdk.Duration.seconds(10),
+    //   memorySize: 128,
+    //   environment: {
+    //     TABLE_NAME: table.tableName,
+    //     REGION: 'eu-west-1',
+    //   },
+    // });
+
+    // const translateBookFn = new lambdanode.NodejsFunction(this, 'TranslateBookFunction', {
+    //   runtime: lambda.Runtime.NODEJS_18_X,
+    //   architecture: lambda.Architecture.ARM_64,
+    //   entry: `${__dirname}/../lambdas/translateBook.ts`,
+    //   timeout: cdk.Duration.seconds(10),
+    //   memorySize: 128,
+    //   environment: {
+    //     TABLE_NAME: table.tableName,
+    //     REGION: 'eu-west-1',
+    //   },
+    // });
+
+    //封装之后的调用
+    //postbook
+    const postConstruct = new PostBookConstruct(this, 'PostBook', {
+      table,
+      region: 'eu-west-1',
     });
 
-    const getBooksFn = new lambdanode.NodejsFunction(this, 'GetBooksFunction', {
-      runtime: lambda.Runtime.NODEJS_18_X,
-      architecture: lambda.Architecture.ARM_64,
-      entry: `${__dirname}/../lambdas/getBooks.ts`,
-      timeout: cdk.Duration.seconds(10),
-      memorySize: 128,
-      environment: {
-        TABLE_NAME: table.tableName,
-        REGION: 'eu-west-1',
-      },
+    //getbooks
+    const getBooksConstruct = new GetBooksConstruct(this, 'GetBooks', {
+      table,
+      region: 'eu-west-1',
+    });
+    
+    //getbook
+    const getBookConstruct = new GetBookConstruct(this, 'GetBook', {
+      table,
+      region: 'eu-west-1',
     });
 
-    const getBookFn = new lambdanode.NodejsFunction(this, 'GetBookFunction', {
-      runtime: lambda.Runtime.NODEJS_18_X,
-      architecture: lambda.Architecture.ARM_64,
-      entry: `${__dirname}/../lambdas/getBook.ts`,
-      timeout: cdk.Duration.seconds(10),
-      memorySize: 128,
-      environment: {
-        TABLE_NAME: table.tableName,
-        REGION: 'eu-west-1',
-      },
+    //update
+    const updateConstruct = new UpdateBookConstruct(this, 'UpdateBook', {
+      table,
+      region: 'eu-west-1',
     });
 
-    const updateBookFn = new lambdanode.NodejsFunction(this, 'UpdateBookFunction', {
-      runtime: lambda.Runtime.NODEJS_18_X,
-      architecture: lambda.Architecture.ARM_64,
-      entry: `${__dirname}/../lambdas/updateBook.ts`,
-      timeout: cdk.Duration.seconds(10),
-      memorySize: 128,
-      environment: {
-        TABLE_NAME: table.tableName,
-        REGION: 'eu-west-1',
-      },
+    //translation
+    const translateConstruct = new TranslateBookConstruct(this, 'TranslateBook', {
+      table,
+      region: 'eu-west-1',
     });
 
-    const translateBookFn = new lambdanode.NodejsFunction(this, 'TranslateBookFunction', {
-      runtime: lambda.Runtime.NODEJS_18_X,
-      architecture: lambda.Architecture.ARM_64,
-      entry: `${__dirname}/../lambdas/translateBook.ts`,
-      timeout: cdk.Duration.seconds(10),
-      memorySize: 128,
-      environment: {
-        TABLE_NAME: table.tableName,
-        REGION: 'eu-west-1',
-      },
-    });
+
 
  // 自动播种数据：通过 AwsCustomResource + batchWriteItem 实现
 
@@ -109,18 +149,18 @@ export class BookStack extends cdk.Stack {
     });
 
     // 授予 Lambda 写入 DynamoDB 的权限
-    table.grantWriteData(postBookFn);
-    table.grantReadData(getBooksFn);
-    table.grantReadData(getBookFn);
-    table.grantWriteData(updateBookFn);
-    table.grantReadWriteData(translateBookFn);
+    // table.grantWriteData(postBookFn);
+    // table.grantReadData(getBooksFn);
+    // table.grantReadData(getBookFn);
+    // table.grantWriteData(updateBookFn);
+    // table.grantReadWriteData(translateBookFn);
 
-    translateBookFn.addToRolePolicy( // 给 translateBookFn 添加 IAM 权限策略
-      new cdk.aws_iam.PolicyStatement({ // 创建新的 IAM 策略语句
-        actions: ['translate:TranslateText'], // 允许调用 Amazon Translate 的 translateText 操作
-        resources: ['*'], // 允许在所有资源上执行该操作
-      })
-    );
+    // translateBookFn.addToRolePolicy( // 给 translateBookFn 添加 IAM 权限策略
+    //   new cdk.aws_iam.PolicyStatement({ // 创建新的 IAM 策略语句
+    //     actions: ['translate:TranslateText'], // 允许调用 Amazon Translate 的 translateText 操作
+    //     resources: ['*'], // 允许在所有资源上执行该操作
+    //   })
+    // );
 
     // 创建 API Gateway 实例
     const api = new apigateway.RestApi(this, 'BooksApi', {
@@ -157,20 +197,20 @@ export class BookStack extends cdk.Stack {
     const books = api.root.addResource('books'); // 在根路径下添加 books 路由
 
     // 将 Lambda 函数与 POST 方法绑定，并要求 API Key 授权
-    books.addMethod('POST', new apigateway.LambdaIntegration(postBookFn), {
+    books.addMethod('POST', new apigateway.LambdaIntegration(postConstruct.handler), {
       apiKeyRequired: true, // 启用 API Key 保护
     });
 
-    books.addMethod('GET', new apigateway.LambdaIntegration(getBooksFn), {
+    books.addMethod('GET', new apigateway.LambdaIntegration(getBooksConstruct.handler), {
       apiKeyRequired: true,
     });
 
     const bookById = books.addResource('book').addResource('{bookId}');
-    bookById.addMethod('GET', new apigateway.LambdaIntegration(getBookFn), {
+    bookById.addMethod('GET', new apigateway.LambdaIntegration(getBookConstruct.handler), {
       apiKeyRequired: true,
     });
 
-    books.addMethod('PUT', new apigateway.LambdaIntegration(updateBookFn), {
+    books.addMethod('PUT', new apigateway.LambdaIntegration(updateConstruct.handler), {
       apiKeyRequired: true,
     });
 
@@ -180,7 +220,7 @@ export class BookStack extends cdk.Stack {
       .addResource('{bookId}')
       .addResource('translation');
 
-    translation.addMethod('GET', new apigateway.LambdaIntegration(translateBookFn));
+    translation.addMethod('GET', new apigateway.LambdaIntegration(translateConstruct.handler));//从translateBookFn更新为translateConstruct.handler
 
   }
 }
