@@ -74,6 +74,7 @@ export class BookStack extends cdk.Stack {
 
     // 授予 Lambda 写入 DynamoDB 的权限
     table.grantWriteData(postBookFn);
+    table.grantReadData(getBooksFn);
 
     // 创建 API Gateway 实例
     const api = new apigateway.RestApi(this, 'BooksApi', {
@@ -112,6 +113,10 @@ export class BookStack extends cdk.Stack {
     // 将 Lambda 函数与 POST 方法绑定，并要求 API Key 授权
     books.addMethod('POST', new apigateway.LambdaIntegration(postBookFn), {
       apiKeyRequired: true, // 启用 API Key 保护
+    });
+
+    books.addMethod('GET', new apigateway.LambdaIntegration(getBooksFn), {
+      apiKeyRequired: true,
     });
   }
 }
