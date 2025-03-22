@@ -72,6 +72,18 @@ export class BookStack extends cdk.Stack {
       },
     });
 
+    const translateBookFn = new lambdanode.NodejsFunction(this, 'TranslateBookFunction', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      architecture: lambda.Architecture.ARM_64,
+      entry: `${__dirname}/../lambdas/translateBook.ts`,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        TABLE_NAME: table.tableName,
+        REGION: 'eu-west-1',
+      },
+    });
+
  // 自动播种数据：通过 AwsCustomResource + batchWriteItem 实现
 
     // 创建一个自定义资源，在 CDK 部署时执行 DynamoDB 的 batchWriteItem 操作
@@ -101,6 +113,14 @@ export class BookStack extends cdk.Stack {
     table.grantReadData(getBooksFn);
     table.grantReadData(getBookFn);
     table.grantWriteData(updateBookFn);
+    table.grantReadWriteData(translateBookFn);
+
+    translateBookFn.addToRolePolicy( // 给 translateBookFn 添加 IAM 权限策略
+      new cdk.aws_iam.PolicyStatement({ // 创建新的 IAM 策略语句
+        actions: ['translate:TranslateText'], // 允许调用 Amazon Translate 的 translateText 操作
+        resources: ['*'], // 允许在所有资源上执行该操作
+      })
+    );
 
     // 创建 API Gateway 实例
     const api = new apigateway.RestApi(this, 'BooksApi', {
@@ -153,6 +173,14 @@ export class BookStack extends cdk.Stack {
     books.addMethod('PUT', new apigateway.LambdaIntegration(updateBookFn), {
       apiKeyRequired: true,
     });
+
+    // 添加翻译路由：GET /books/{userId}/{bookId}/translation
+    const translation = books
+      .addResource('{userId}')
+      .addResource('{bookId}')
+      .addResource('translation');
+
+    translation.addMethod('GET', new apigateway.LambdaIntegration(translateBookFn));
 
   }
 }

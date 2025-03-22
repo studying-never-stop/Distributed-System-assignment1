@@ -1,3 +1,5 @@
+// lambdas/translateBook.ts
+
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import { DynamoDB, Translate } from 'aws-sdk';
 
@@ -51,12 +53,13 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     const translatedText = translated.TranslatedText;
 
-    // 将翻译结果写入 DynamoDB 中（追加到 translations 字段）
+    // ✅ 修复：确保 translations 是 map，动态更新语言字段
     await dynamo.update({
       TableName: TABLE_NAME,
       Key: { userId, bookId },
-      UpdateExpression: 'set translations.#lang = :text',
+      UpdateExpression: 'set #translations.#lang = :text',
       ExpressionAttributeNames: {
+        '#translations': 'translations',
         '#lang': language,
       },
       ExpressionAttributeValues: {
