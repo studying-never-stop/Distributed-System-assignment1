@@ -48,6 +48,18 @@ export class BookStack extends cdk.Stack {
       },
     });
 
+    const getBookFn = new lambdanode.NodejsFunction(this, 'GetBookFunction', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      architecture: lambda.Architecture.ARM_64,
+      entry: `${__dirname}/../lambdas/getBook.ts`,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        TABLE_NAME: table.tableName,
+        REGION: 'eu-west-1',
+      },
+    });
+
  // 自动播种数据：通过 AwsCustomResource + batchWriteItem 实现
 
     // 创建一个自定义资源，在 CDK 部署时执行 DynamoDB 的 batchWriteItem 操作
@@ -75,6 +87,7 @@ export class BookStack extends cdk.Stack {
     // 授予 Lambda 写入 DynamoDB 的权限
     table.grantWriteData(postBookFn);
     table.grantReadData(getBooksFn);
+    table.grantReadData(getBookFn);
 
     // 创建 API Gateway 实例
     const api = new apigateway.RestApi(this, 'BooksApi', {
@@ -118,5 +131,11 @@ export class BookStack extends cdk.Stack {
     books.addMethod('GET', new apigateway.LambdaIntegration(getBooksFn), {
       apiKeyRequired: true,
     });
+
+    const bookById = books.addResource('book').addResource('{bookId}');
+    bookById.addMethod('GET', new apigateway.LambdaIntegration(getBookFn), {
+      apiKeyRequired: true,
+    });
+    
   }
 }
