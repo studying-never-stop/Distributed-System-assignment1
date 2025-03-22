@@ -13,8 +13,9 @@ export class BookStack extends cdk.Stack {
     const table = new dynamodb.Table(this, 'BooksTable', {
       partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING }, // 分区键
       sortKey: { name: 'bookId', type: dynamodb.AttributeType.STRING }, // 排序键
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST, // 按需计费模式
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY, // 删除 Stack 时销毁表（仅限开发环境）
+      tableName:"Books",
     });
 
     // 创建 Lambda 函数 postBook，用于添加书籍
@@ -34,6 +35,15 @@ export class BookStack extends cdk.Stack {
     const api = new apigateway.RestApi(this, 'BooksApi', {
       restApiName: 'Book Service', // API 名称
       description: 'Book Management REST API', // 描述
+      deployOptions: {
+        stageName: "dev",
+      },
+      defaultCorsPreflightOptions: {
+        allowHeaders: ["Content-Type", "X-Amz-Date","X-Api-Key"],
+        allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
+        allowCredentials: true,
+        allowOrigins: ["*"],
+      },
       apiKeySourceType: apigateway.ApiKeySourceType.HEADER, // 从请求头中读取 API Key
     });
 
