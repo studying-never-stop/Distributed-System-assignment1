@@ -6,6 +6,8 @@ __Demo:__ https://youtu.be/XNNDFvGtnNE
 
 ### Context.
 
+use : "npx cdk deploy --all" to start
+
 Book Management System
 
 Table item attributes:

@@ -1,5 +1,3 @@
-// lambdas/translateBook.ts
-
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import { DynamoDB, Translate } from 'aws-sdk';
 
