@@ -53,7 +53,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     const translatedText = translated.TranslatedText;
 
-    // ✅ 修复：确保 translations 是 map，动态更新语言字段
+    // 修复：确保 translations 是 map，动态更新语言字段
     await dynamo.update({
       TableName: TABLE_NAME,
       Key: { userId, bookId },
